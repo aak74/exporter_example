@@ -1,6 +1,6 @@
 [
   {
-    "class_name": "Calculate",
+    "className": "Calculate",
     "duration": 1500,
     "completed": 20,
     "retried": 1

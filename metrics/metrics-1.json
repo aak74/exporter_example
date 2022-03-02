@@ -1,15 +1,15 @@
 [
   {
-    "class_name": "Calculate",
-    "host": "daemon-1",
+    "className": "Calculate",
+    "workerId": "daemon-1",
     "duration": 1500,
     "completed": 20,
     "failed": 5,
     "retried": 1
   },
   {
-    "class_name": "Recalculate",
-    "host": "daemon-1",
+    "className": "Recalculate",
+    "workerId": "daemon-1",
     "duration": 8000,
     "completed": 60,
     "failed": 12,
