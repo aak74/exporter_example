@@ -3,14 +3,13 @@ package main
 import (
 	"encoding/json"
 	"flag"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
 	"path/filepath"
-
-	"github.com/prometheus/client_golang/prometheus"
-	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
 const (
@@ -18,8 +17,8 @@ const (
 )
 
 type TaskMetric struct {
-	ClassName string  `json:"class_name"`
-	Host      string  `json:"host"`
+	ClassName string  `json:"className"`
+	WorkerId  string  `json:"workerId"`
 	Duration  float64 `json:"duration"`
 	Completed float64 `json:"completed"`
 	Failed    float64 `json:"failed"`
@@ -29,7 +28,7 @@ type TaskMetric struct {
 type taskCollector struct{}
 
 var (
-	labels       = []string{"class_name", "host"}
+	labels       = []string{"class_name", "worker_id"}
 	taskDuration = prometheus.NewDesc(
 		prometheus.BuildFQName(namespace, "", "duration"),
 		"Duration task in ms",
@@ -67,20 +66,20 @@ func (c taskCollector) Collect(ch chan<- prometheus.Metric) {
 	taskMetrics := getCollectedMetrics()
 
 	for _, metric := range taskMetrics {
-		ch <- getMetric(taskDuration, metric)
-		ch <- getMetric(taskCompleted, metric)
-		ch <- getMetric(taskFailed, metric)
-		ch <- getMetric(taskRetried, metric)
+		ch <- getMetric(metric, metric.Duration, taskDuration)
+		ch <- getMetric(metric, metric.Completed, taskCompleted)
+		ch <- getMetric(metric, metric.Failed, taskFailed)
+		ch <- getMetric(metric, metric.Retried, taskRetried)
 	}
 }
 
-func getMetric(desc *prometheus.Desc, metric TaskMetric) prometheus.Metric {
+func getMetric(metric TaskMetric, value float64, desc *prometheus.Desc) prometheus.Metric {
 	return prometheus.MustNewConstMetric(
 		desc,
 		prometheus.CounterValue,
-		metric.Duration,
+		value,
 		metric.ClassName,
-		metric.Host,
+		metric.WorkerId,
 	)
 }
 
@@ -118,7 +117,6 @@ func getCollectedMetrics() []TaskMetric {
 
 			var taskMetrics []TaskMetric
 			_ = json.Unmarshal(file, &taskMetrics)
-			//log.Print(taskMetrics)
 			taskMetricsAll = append(taskMetricsAll, taskMetrics...)
 		}
 		return nil
